@@ -47,13 +47,16 @@ bool triangle_rotation = false;
 //For the mouse dragging 
 bool mouse_dragging;
 glm::vec2 mouse_start_drag;
+enum CAM_TYPE{ROTATION, PAN, NONE} mode;
 
 //Camera handling
 glm::vec3 camera_position;
 glm::vec3 camera_center;
 glm::vec3 camera_up;
 glm::vec2 camera_pan;
-glm::quat camera_rotation;
+glm::quat camera_base_rotation;
+glm::quat camera_new_rotation;
+
 
 //Program management
 void exit_glut();
@@ -86,14 +89,6 @@ void mouse_active(int mouse_x, int mouse_y);
 void mouse(int button, int state, int mouse_x, int mouse_y);
 void mouse_wheel(int wheel, int direction, int mouse_x, int mouse_y);
 void idle();
-
-void APIENTRY openglCallbackFunction(GLenum source,
-	GLenum type,
-	GLuint id,
-	GLenum severity,
-	GLsizei length,
-	const GLchar* message,
-	const void* userParam);
 
 int main(int argc, char* argv[]) {
 	glutInit(&argc, argv);
@@ -206,15 +201,12 @@ void idle() {
 }
 
 void init_program() {
-	//seconds = 0.0;
-	//window_width = window_height = 512;
-	//world_radious = sqrtf(3.0f);
+	mode = NONE;
 	mouse_dragging = false;
 	rotation_angle = 0.0f;
 	triangle_rotation = true;
 	texture_mapping_flag = true;
 	reset_camera();
-	
 }
 
 
@@ -228,7 +220,7 @@ void display() {
 	//Model
 	glm::mat4 M = triangle_rotation ? glm::rotate(I, rotation_angle, glm::vec3(0.0f, 1.0f, 0.0f)) : I;
 	//View
-	glm::mat4 camRot = glm::mat4_cast(camera_rotation);
+	glm::mat4 camRot = glm::mat4_cast(camera_new_rotation) * glm::mat4_cast(camera_base_rotation);
 	glm::vec3 position = camera_position + glm::vec3(camera_pan, 0.0f);
 	glm::vec3 center = camera_center + glm::vec3(camera_pan, 0.0f);
 	glm::mat4 V = glm::lookAt(position, center, camera_up);
@@ -346,39 +338,40 @@ void mouse_active(int mouse_x, int mouse_y) {
 		mouse_current.y = static_cast<float>(mouse_y);
 
 		glm::vec2 deltas = mouse_start_drag - mouse_current;
-		camera_pan.x = deltas.x / glutGet(GLUT_WINDOW_WIDTH) * 2.0;
-		camera_pan.y = -deltas.y / glutGet(GLUT_WINDOW_HEIGHT) * 2.0;
-		/*Update the new rotation */
-		/*new_rotation_angles.x = deltas.x / glutGet(GLUT_WINDOW_WIDTH) * PI;
-		new_rotation_angles.y = deltas.y / glutGet(GLUT_WINDOW_HEIGHT) * PI;*/
+		if (mode == PAN) {
+			camera_pan.x = deltas.x / glutGet(GLUT_WINDOW_WIDTH) * 2.0f;
+			camera_pan.y = -deltas.y / glutGet(GLUT_WINDOW_HEIGHT) * 2.0f;
+		} else if (mode == ROTATION) {
+			/*Update the new rotation */
+			/*new_rotation_angles.x = deltas.x / glutGet(GLUT_WINDOW_WIDTH) * PI;
+			new_rotation_angles.y = deltas.y / glutGet(GLUT_WINDOW_HEIGHT) * PI;*/
+		}
 	}
 	glutPostRedisplay();
 }
 
 void mouse(int button, int state, int mouse_x, int mouse_y) {
-	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-		mouse_dragging = true;
-		mouse_start_drag.x = static_cast<float>(mouse_x);
-		mouse_start_drag.y = static_cast<float>(mouse_y);
-	} else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
-		mouse_dragging = false;
-		/* Calculate the accumulated rotation: base rotation plus new one */
-		/* Reset the new rotation to identity */
-	} else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN) {
-		mouse_dragging = true;
-		mouse_start_drag.x = static_cast<float>(mouse_x);
-		mouse_start_drag.y = static_cast<float>(mouse_y);
-	} else if (button == GLUT_MIDDLE_BUTTON && state == GLUT_UP) {
-		mouse_dragging = false;
-		
-		camera_center.x += camera_pan.x;
-		camera_center.y += camera_pan.y;
-		camera_position.x += camera_pan.x;
-		camera_position.y += camera_pan.y;
 
-		camera_pan = glm::vec2(0.0, 0.0);
+	if (state == GLUT_DOWN) {
+		mouse_dragging = true;
+		mouse_start_drag.x = static_cast<float>(mouse_x);
+		mouse_start_drag.y = static_cast<float>(mouse_y);
+		if (button == GLUT_MIDDLE_BUTTON) {
+			mode = PAN;
+		} else if (button == GLUT_LEFT_BUTTON) {
+			mode = ROTATION;
+		}
+	} else {
+		mouse_dragging = false;
+		if (button == GLUT_MIDDLE_BUTTON) {
+			camera_center += glm::vec3(camera_pan, 0.0f);
+			camera_position += glm::vec3(camera_pan, 0.0f);
+			camera_pan = glm::vec2(0.0, 0.0);
+		} else if (button == GLUT_LEFT_BUTTON) {
+			/* Calculate the accumulated rotation: base rotation plus new one */
+			/* Reset the new rotation to identity */
+		}
 	}
-
 	glutPostRedisplay();
 }
 
