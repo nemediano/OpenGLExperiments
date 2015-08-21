@@ -1,0 +1,15 @@
+Solution helper win32
+Environment
+PATH=%PATH%;$(SolutionDir)bin\win32
+Additional include dir
+$(SolutionDir)include
+Additional library dir
+$(SolutionDir)lib\win32
+Input
+glew32.lib
+glew32s.lib
+freeglut.lib
+DevIL.lib
+ILU.lib
+ILUT.lib
+For 64 bits just change the win32 for x64 on PATH and Additional Library dir
