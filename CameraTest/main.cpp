@@ -10,14 +10,16 @@
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp> 
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/norm.hpp>
+#include <glm/gtx/vector_angle.hpp>
 
 #include "opengl/HelperFunctions.h"
 #include "opengl/OpenGLProgram.h"
 #include "textures/TextureHandler.h"
 
 opengl::OpenGLProgram* program_ptr = nullptr;
-texture::TextureHandler* texture_ptr = nullptr;
+texture::TextureHandler* texture_ptr[6] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 
 using namespace std;
 //Glut window pointer
@@ -43,6 +45,7 @@ float rotation_angle;
 float field_of_view_y;
 bool texture_mapping_flag;
 bool triangle_rotation = false;
+int nTriangles;
 
 //For the mouse dragging 
 bool mouse_dragging;
@@ -56,6 +59,7 @@ glm::vec3 camera_up;
 glm::vec2 camera_pan;
 glm::quat camera_base_rotation;
 glm::quat camera_new_rotation;
+float projection_on_curve(glm::vec2 projected);
 
 
 //Program management
@@ -112,7 +116,13 @@ int main(int argc, char* argv[]) {
 
 void exit_glut() {
 	delete program_ptr;
-	delete texture_ptr;
+
+	delete texture_ptr[0];
+	delete texture_ptr[1];
+	delete texture_ptr[2];
+	delete texture_ptr[3];
+	delete texture_ptr[4];
+	delete texture_ptr[5];
 
 	glutDestroyWindow(window);
 	exit(EXIT_SUCCESS);
@@ -136,8 +146,18 @@ void init_OpenGL() {
 
 	opengl::get_error_log();
 	
-	texture_ptr = new texture::TextureHandler();
-	texture_ptr->load_texture(L"img/stone.png");
+	texture_ptr[0] = new texture::TextureHandler();
+	texture_ptr[0]->load_texture(L"img/three.png");
+	texture_ptr[1] = new texture::TextureHandler();
+	texture_ptr[1]->load_texture(L"img/one.png");
+	texture_ptr[2] = new texture::TextureHandler();
+	texture_ptr[2]->load_texture(L"img/six.png");
+	texture_ptr[3] = new texture::TextureHandler();
+	texture_ptr[3]->load_texture(L"img/four.png");
+	texture_ptr[4] = new texture::TextureHandler();
+	texture_ptr[4]->load_texture(L"img/two.png");
+	texture_ptr[5] = new texture::TextureHandler();
+	texture_ptr[5]->load_texture(L"img/five.png");
 	
 	u_PVM_location = program_ptr->get_uniform_location("PVM");
 	u_color_location = program_ptr->get_uniform_location("Color");
@@ -204,8 +224,10 @@ void init_program() {
 	mode = NONE;
 	mouse_dragging = false;
 	rotation_angle = 0.0f;
-	triangle_rotation = true;
+	triangle_rotation = false;
 	texture_mapping_flag = true;
+	camera_base_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
+	camera_new_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
 	reset_camera();
 }
 
@@ -220,7 +242,7 @@ void display() {
 	//Model
 	glm::mat4 M = triangle_rotation ? glm::rotate(I, rotation_angle, glm::vec3(0.0f, 1.0f, 0.0f)) : I;
 	//View
-	glm::mat4 camRot = glm::mat4_cast(camera_new_rotation) * glm::mat4_cast(camera_base_rotation);
+	glm::mat4 camRot = glm::mat4_cast(glm::normalize(camera_new_rotation) * glm::normalize(camera_base_rotation));
 	glm::vec3 position = camera_position + glm::vec3(camera_pan, 0.0f);
 	glm::vec3 center = camera_center + glm::vec3(camera_pan, 0.0f);
 	glm::mat4 V = glm::lookAt(position, center, camera_up);
@@ -240,11 +262,6 @@ void display() {
 		glUniform1i(u_texture_option_loc, texture_mapping_flag ? 1 : 0);
 	}
 	
-	texture_ptr->bind();
-	if (u_color_location != -1) {
-		glUniform4fv(u_color_location, 1, glm::value_ptr(color));
-	}
-	
 	/*Bind*/
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	if (a_position_loc != -1) {
@@ -260,9 +277,25 @@ void display() {
 		glVertexAttribPointer(a_textCoord_loc, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), OFFSET_OF(Vertex, textCoord));
 	}
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-	/*Draw*/
-	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
-	/*Unbind and clean */
+	if (u_color_location != -1) {
+		glUniform4fv(u_color_location, 1, glm::value_ptr(color));
+	}
+	
+	/* Draw */
+	texture_ptr[0]->bind();
+	glDrawElements(GL_TRIANGLES, 3 * 2, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
+	texture_ptr[1]->bind();
+	glDrawElements(GL_TRIANGLES, 3 * 2, GL_UNSIGNED_SHORT, BUFFER_OFFSET(6 * sizeof(unsigned short)));
+	texture_ptr[2]->bind();
+	glDrawElements(GL_TRIANGLES, 3 * 2, GL_UNSIGNED_SHORT, BUFFER_OFFSET(12 * sizeof(unsigned short)));
+	texture_ptr[3]->bind();
+	glDrawElements(GL_TRIANGLES, 3 * 2, GL_UNSIGNED_SHORT, BUFFER_OFFSET(18 * sizeof(unsigned short)));
+	texture_ptr[4]->bind();
+	glDrawElements(GL_TRIANGLES, 3 * 2, GL_UNSIGNED_SHORT, BUFFER_OFFSET(24 * sizeof(unsigned short)));
+	texture_ptr[5]->bind();
+	glDrawElements(GL_TRIANGLES, 3 * 2, GL_UNSIGNED_SHORT, BUFFER_OFFSET(30 * sizeof(unsigned short)));
+	
+	/* Unbind and clean */
 	if (a_position_loc != -1) {
 		glDisableVertexAttribArray(a_position_loc);
 	}
@@ -282,16 +315,50 @@ void display() {
 
 
 void create_primitives() {
-	const unsigned int nVertex = 3;
-	const unsigned int nIndices = 3;
-	
+	const unsigned int nVertex = 24;
+	const unsigned int nIndices = 36;
+	nTriangles = 12;
+
 	Vertex points[nVertex] = {
-		{ { 0.0f,  1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.5f, 1.0f}, },
-		{ {-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}, },
-		{ { 1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}, }
+		//Front face of cube
+		{ {-1.0f,  1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}, }, //0
+		{ { 1.0f,  1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}, }, //1
+		{ {-1.0f, -1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}, }, //2
+		{ { 1.0f, -1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}, }, //3
+		//Top face of cube
+		{ {-1.0f, 1.0f, -1.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f }, }, //4
+		{ { 1.0f, 1.0f, -1.0f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 0.0f }, },//5
+		{ {-1.0f, 1.0f,  1.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f }, },//6
+		{ { 1.0f, 1.0f,  1.0f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 1.0f }, }, //7
+		//Down face of cube
+		{ {-1.0f, -1.0f,  1.0f}, { 0.0f, -1.0f, 0.0f }, { 0.0f, 0.0f }, }, //8
+		{ { 1.0f, -1.0f,  1.0f}, { 0.0f, -1.0f, 0.0f }, { 1.0f, 0.0f }, },//9
+		{ {-1.0f, -1.0f, -1.0f}, { 0.0f, -1.0f, 0.0f }, { 0.0f, 1.0f }, },//10
+		{ { 1.0f, -1.0f, -1.0f}, { 0.0f, -1.0f, 0.0f }, { 1.0f, 1.0f }, }, //11
+		//Back face of cube
+		{ { 1.0f,  1.0f, -1.0f},  { 0.0f, 0.0f, -1.0f }, { 0.0f, 0.0f }, }, //12
+		{ {-1.0f,  1.0f, -1.0f }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 0.0f }, }, //13
+		{ { 1.0f, -1.0f, -1.0f }, { 0.0f, 0.0f, -1.0f }, { 0.0f, 1.0f }, }, //14
+		{ {-1.0f, -1.0f, -1.0f }, { 0.0f, 0.0f, -1.0f }, { 1.0f, 1.0f }, },  //15
+		//Left face of cube
+		{ {-1.0f,  1.0f, -1.0f }, {-1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f }, }, //16
+		{ {-1.0f,  1.0f,  1.0f }, {-1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f }, }, //17
+		{ {-1.0f, -1.0f, -1.0f }, {-1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f }, }, //18
+		{ {-1.0f, -1.0f,  1.0f }, {-1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }, },  //19
+		//Right face of cube
+		{ { 1.0f,  1.0f, -1.0f}, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f }, }, //20
+		{ { 1.0f,  1.0f,  1.0f}, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f }, }, //21
+		{ { 1.0f, -1.0f, -1.0f}, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f }, }, //22
+		{ { 1.0f, -1.0f,  1.0f}, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }, }  //23
 	};
 
-	unsigned short indices[nIndices] = { 1, 0, 2 };
+	unsigned short indices[nIndices] = { 2, 1, 0, 2, 3, 1, 
+		                                 6, 5, 4, 6, 7, 5,
+										 10, 9, 8, 10, 11, 9,
+										 14, 13, 12, 14, 15, 13,
+										 18, 17, 16, 18, 19, 17,
+										 22, 21, 20, 22, 23, 21
+									    };
 
 	//Create the buffers
 	glGenBuffers(1, &vbo);
@@ -334,20 +401,42 @@ void mouse_wheel(int wheel, int direction, int mouse_x, int mouse_y) {
 void mouse_active(int mouse_x, int mouse_y) {
 	glm::vec2 mouse_current;
 	if (mouse_dragging) {
-		mouse_current.x = static_cast<float>(mouse_x);
-		mouse_current.y = static_cast<float>(mouse_y);
-
-		glm::vec2 deltas = mouse_start_drag - mouse_current;
+		mouse_current = glm::vec2(static_cast<float>(mouse_x), static_cast<float>(mouse_y));
 		if (mode == PAN) {
+			glm::vec2 deltas = mouse_start_drag - mouse_current;
 			camera_pan.x = deltas.x / glutGet(GLUT_WINDOW_WIDTH) * 2.0f;
 			camera_pan.y = -deltas.y / glutGet(GLUT_WINDOW_HEIGHT) * 2.0f;
 		} else if (mode == ROTATION) {
-			/*Update the new rotation */
-			/*new_rotation_angles.x = deltas.x / glutGet(GLUT_WINDOW_WIDTH) * PI;
-			new_rotation_angles.y = deltas.y / glutGet(GLUT_WINDOW_HEIGHT) * PI;*/
+			/* Update the new rotation */
+			glm::vec2 window_center = glm::vec2(glutGet(GLUT_WINDOW_WIDTH) * 0.5f, glutGet(GLUT_WINDOW_HEIGHT) * 0.5f);
+			glm::vec3 v_1 = glm::vec3(mouse_current - window_center, projection_on_curve(mouse_current));
+			glm::vec3 v_2 = glm::vec3(mouse_start_drag - window_center, projection_on_curve(mouse_start_drag));
+			v_1 = glm::normalize(v_1);
+			v_2 = glm::normalize(v_2);
+			glm::vec3 axis = glm::cross(v_1, v_2);
+			float angle = glm::angle(v_1, v_2);
+			//camera_new_rotation = glm::quat(glm::cos(angle / 0.5f), glm::sin(angle * 0.5f) * axis);
+			
+			camera_new_rotation.x = glm::cos(angle * 0.5f);
+			camera_new_rotation.y = glm::sin(angle * 0.5f) * axis.x;
+			camera_new_rotation.z = glm::sin(angle * 0.5f) * axis.y;
+			camera_new_rotation.w = glm::sin(angle * 0.5f) * axis.z;
 		}
 	}
 	glutPostRedisplay();
+}
+
+float projection_on_curve(glm::vec2 projected) {
+	const float radius = 2.0f;
+	float z = 0.0f;
+	if (glm::length2(projected) <= (radius * radius * 0.5f)) {
+		//Inside the sphere
+		z = glm::sqrt(radius * radius - glm::length2(projected));
+	} else {
+		//Outside of the sphere using hyperbolic sheet
+		z = (radius * radius * 0.5f) / glm::length(projected);
+	}
+	return z;
 }
 
 void mouse(int button, int state, int mouse_x, int mouse_y) {
@@ -369,7 +458,9 @@ void mouse(int button, int state, int mouse_x, int mouse_y) {
 			camera_pan = glm::vec2(0.0, 0.0);
 		} else if (button == GLUT_LEFT_BUTTON) {
 			/* Calculate the accumulated rotation: base rotation plus new one */
-			/* Reset the new rotation to identity */
+			camera_base_rotation = camera_new_rotation * camera_base_rotation;
+			/* Reset new rotation to identity */
+			camera_new_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
 		}
 	}
 	glutPostRedisplay();
