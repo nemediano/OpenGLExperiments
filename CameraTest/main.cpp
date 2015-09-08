@@ -117,12 +117,9 @@ int main(int argc, char* argv[]) {
 void exit_glut() {
 	delete program_ptr;
 
-	delete texture_ptr[0];
-	delete texture_ptr[1];
-	delete texture_ptr[2];
-	delete texture_ptr[3];
-	delete texture_ptr[4];
-	delete texture_ptr[5];
+	for (int i = 0; i < 6; ++i) {
+		delete texture_ptr[i];
+	}
 
 	glutDestroyWindow(window);
 	exit(EXIT_SUCCESS);
@@ -146,17 +143,14 @@ void init_OpenGL() {
 
 	opengl::get_error_log();
 	
-	texture_ptr[0] = new texture::TextureHandler();
+	for (int i = 0; i < 6; ++i) {
+		texture_ptr[i] = new texture::TextureHandler();
+	}	
 	texture_ptr[0]->load_texture(L"img/three.png");
-	texture_ptr[1] = new texture::TextureHandler();
 	texture_ptr[1]->load_texture(L"img/one.png");
-	texture_ptr[2] = new texture::TextureHandler();
 	texture_ptr[2]->load_texture(L"img/six.png");
-	texture_ptr[3] = new texture::TextureHandler();
 	texture_ptr[3]->load_texture(L"img/four.png");
-	texture_ptr[4] = new texture::TextureHandler();
 	texture_ptr[4]->load_texture(L"img/two.png");
-	texture_ptr[5] = new texture::TextureHandler();
 	texture_ptr[5]->load_texture(L"img/five.png");
 	
 	u_PVM_location = program_ptr->get_uniform_location("PVM");
@@ -282,18 +276,10 @@ void display() {
 	}
 	
 	/* Draw */
-	texture_ptr[0]->bind();
-	glDrawElements(GL_TRIANGLES, 3 * 2, GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
-	texture_ptr[1]->bind();
-	glDrawElements(GL_TRIANGLES, 3 * 2, GL_UNSIGNED_SHORT, BUFFER_OFFSET(6 * sizeof(unsigned short)));
-	texture_ptr[2]->bind();
-	glDrawElements(GL_TRIANGLES, 3 * 2, GL_UNSIGNED_SHORT, BUFFER_OFFSET(12 * sizeof(unsigned short)));
-	texture_ptr[3]->bind();
-	glDrawElements(GL_TRIANGLES, 3 * 2, GL_UNSIGNED_SHORT, BUFFER_OFFSET(18 * sizeof(unsigned short)));
-	texture_ptr[4]->bind();
-	glDrawElements(GL_TRIANGLES, 3 * 2, GL_UNSIGNED_SHORT, BUFFER_OFFSET(24 * sizeof(unsigned short)));
-	texture_ptr[5]->bind();
-	glDrawElements(GL_TRIANGLES, 3 * 2, GL_UNSIGNED_SHORT, BUFFER_OFFSET(30 * sizeof(unsigned short)));
+	for (int i = 0; i < 6; ++i) {
+		texture_ptr[i]->bind();
+		glDrawElements(GL_TRIANGLES, 3 * 2, GL_UNSIGNED_SHORT, BUFFER_OFFSET(6 * i * sizeof(unsigned short)));
+	}
 	
 	/* Unbind and clean */
 	if (a_position_loc != -1) {
@@ -416,7 +402,6 @@ void mouse_active(int mouse_x, int mouse_y) {
 			glm::vec3 axis = glm::cross(v_1, v_2);
 			float angle = glm::angle(v_1, v_2);
 			//camera_new_rotation = glm::quat(glm::cos(angle / 0.5f), glm::sin(angle * 0.5f) * axis);
-			
 			camera_new_rotation.x = glm::cos(angle * 0.5f);
 			camera_new_rotation.y = glm::sin(angle * 0.5f) * axis.x;
 			camera_new_rotation.z = glm::sin(angle * 0.5f) * axis.y;
@@ -427,7 +412,7 @@ void mouse_active(int mouse_x, int mouse_y) {
 }
 
 float projection_on_curve(glm::vec2 projected) {
-	const float radius = 2.0f;
+	const float radius = 0.8f;
 	float z = 0.0f;
 	if (glm::length2(projected) <= (radius * radius * 0.5f)) {
 		//Inside the sphere
