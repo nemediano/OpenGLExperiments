@@ -51,6 +51,9 @@ int nTriangles;
 bool mouse_dragging;
 glm::vec2 mouse_start_drag;
 enum CAM_TYPE{ROTATION, PAN, NONE} mode;
+//Temp for understanding go back to Euler angles
+glm::vec2 base_rotation_angles;
+glm::vec2 new_rotation_angles;
 
 //Camera handling
 glm::vec3 camera_position;
@@ -222,6 +225,8 @@ void init_program() {
 	texture_mapping_flag = true;
 	camera_base_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
 	camera_new_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
+	base_rotation_angles = glm::vec2(0.0f, 0.0f);
+	new_rotation_angles = glm::vec2(0.0f, 0.0f);
 	reset_camera();
 }
 
@@ -235,14 +240,16 @@ void display() {
 	/* Rotation must be the accumulated rotation: base plus new */
 	//Model
 	//glm::mat4 M = triangle_rotation ? glm::rotate(I, rotation_angle, glm::vec3(0.0f, 1.0f, 0.0f)) : I;
-	glm::vec3 axis = 5.0f * glm::vec3(0.0f, 1.0f, 0.0f);
-	glm::quat rotationQuaternion = glm::quat(cos(rotation_angle * 0.5f), sin(rotation_angle * 0.5f) * axis);
-	rotationQuaternion = glm::normalize(rotationQuaternion);
-	glm::mat4 M = glm::mat4_cast(rotationQuaternion);
-	//glm::mat4 M = triangle_rotation ? glm::rotate(I, rotation_angle, glm::vec3(0.0f, 1.0f, 0.0f)) : I;
+	//glm::vec3 axis = 5.0f * glm::vec3(0.0f, 1.0f, 0.0f);
+	//glm::quat rotationQuaternion = glm::quat(cos(rotation_angle * 0.5f), sin(rotation_angle * 0.5f) * axis);
+	//rotationQuaternion = glm::normalize(rotationQuaternion);
+	//glm::mat4 M = glm::mat4_cast(rotationQuaternion);
+	glm::mat4 M = triangle_rotation ? glm::rotate(I, rotation_angle, glm::vec3(0.0f, 1.0f, 0.0f)) : I;
 	//View
 	//glm::mat4 camRot = glm::mat4_cast(glm::normalize(camera_new_rotation)) * glm::mat4_cast(glm::normalize(camera_base_rotation));
 	glm::mat4 camRot = I;
+	camRot = glm::rotate(camRot, base_rotation_angles.x + new_rotation_angles.x, glm::vec3(0.0f, 1.0f, 0.0f));
+	camRot = glm::rotate(camRot, base_rotation_angles.y + new_rotation_angles.y, glm::vec3(1.0f, 0.0f, 0.0f));
 	glm::vec3 position = camera_position + glm::vec3(camera_pan, 0.0f);
 	glm::vec3 center = camera_center + glm::vec3(camera_pan, 0.0f);
 	glm::mat4 V = glm::lookAt(position, center, camera_up);
@@ -338,10 +345,10 @@ void create_primitives() {
 		{ {-1.0f, -1.0f, -1.0f }, {-1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f }, }, //18
 		{ {-1.0f, -1.0f,  1.0f }, {-1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }, },  //19
 		//Right face of cube
-		{ { 1.0f,  1.0f, -1.0f}, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f }, }, //20
-		{ { 1.0f,  1.0f,  1.0f}, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f }, }, //21
-		{ { 1.0f, -1.0f, -1.0f}, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f }, }, //22
-		{ { 1.0f, -1.0f,  1.0f}, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }, }  //23
+		{ { 1.0f,  1.0f,  1.0f}, { 1.0f, 0.0f, 0.0f }, { 0.0f, 0.0f }, }, //20
+		{ { 1.0f,  1.0f, -1.0f}, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f }, }, //21
+		{ { 1.0f, -1.0f,  1.0f}, { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f }, }, //22
+		{ { 1.0f, -1.0f, -1.0f}, { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f }, }  //23
 	};
 
 	unsigned short indices[nIndices] = { 2, 1, 0, 2, 3, 1, 
@@ -394,24 +401,27 @@ void mouse_active(int mouse_x, int mouse_y) {
 	glm::vec2 mouse_current;
 	if (mouse_dragging) {
 		mouse_current = glm::vec2(static_cast<float>(mouse_x), static_cast<float>(mouse_y));
+		glm::vec2 deltas = mouse_start_drag - mouse_current;
 		if (mode == PAN) {
-			glm::vec2 deltas = mouse_start_drag - mouse_current;
 			camera_pan.x = deltas.x / glutGet(GLUT_WINDOW_WIDTH) * 2.0f;
 			camera_pan.y = -deltas.y / glutGet(GLUT_WINDOW_HEIGHT) * 2.0f;
 		} else if (mode == ROTATION) {
 			/* Update the new rotation */
-			glm::vec2 window_center = glm::vec2(glutGet(GLUT_WINDOW_WIDTH) * 0.5f, glutGet(GLUT_WINDOW_HEIGHT) * 0.5f);
-			glm::vec3 v_1 = glm::vec3(mouse_current - window_center, projection_on_curve(mouse_current));
-			glm::vec3 v_2 = glm::vec3(mouse_start_drag - window_center, projection_on_curve(mouse_start_drag));
-			v_1 = glm::normalize(v_1);
-			v_2 = glm::normalize(v_2);
-			glm::vec3 axis = glm::cross(v_1, v_2);
-			float angle = glm::angle(v_1, v_2);
+			//glm::vec2 window_center = glm::vec2(glutGet(GLUT_WINDOW_WIDTH) * 0.5f, glutGet(GLUT_WINDOW_HEIGHT) * 0.5f);
+			//glm::vec3 v_1 = glm::vec3(mouse_current - window_center, projection_on_curve(mouse_current));
+			//glm::vec3 v_2 = glm::vec3(mouse_start_drag - window_center, projection_on_curve(mouse_start_drag));
+			//v_1 = glm::normalize(v_1);
+			//v_2 = glm::normalize(v_2);
+			//glm::vec3 axis = glm::cross(v_1, v_2);
+			//float angle = glm::angle(v_1, v_2);
 			//camera_new_rotation = glm::quat(glm::cos(angle / 0.5f), glm::sin(angle * 0.5f) * axis);
-			camera_new_rotation.x = glm::cos(angle * 0.5f);
-			camera_new_rotation.y = glm::sin(angle * 0.5f) * axis.x;
-			camera_new_rotation.z = glm::sin(angle * 0.5f) * axis.y;
-			camera_new_rotation.w = glm::sin(angle * 0.5f) * axis.z;
+			//camera_new_rotation.x = glm::cos(angle * 0.5f);
+			//camera_new_rotation.y = glm::sin(angle * 0.5f) * axis.x;
+			//camera_new_rotation.z = glm::sin(angle * 0.5f) * axis.y;
+			//camera_new_rotation.w = glm::sin(angle * 0.5f) * axis.z;
+			//Added later
+			new_rotation_angles.x = deltas.x / glutGet(GLUT_WINDOW_WIDTH) * TAU / 2.0f;
+			new_rotation_angles.y = deltas.y / glutGet(GLUT_WINDOW_HEIGHT) * TAU / 2.0f;
 		}
 	}
 	glutPostRedisplay();
@@ -449,9 +459,12 @@ void mouse(int button, int state, int mouse_x, int mouse_y) {
 			camera_pan = glm::vec2(0.0, 0.0);
 		} else if (button == GLUT_LEFT_BUTTON) {
 			/* Calculate the accumulated rotation: base rotation plus new one */
-			camera_base_rotation = camera_new_rotation * camera_base_rotation;
+			//camera_base_rotation = camera_new_rotation * camera_base_rotation;
 			/* Reset new rotation to identity */
-			camera_new_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
+			//camera_new_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
+			//Add for testing
+			base_rotation_angles += new_rotation_angles;
+			new_rotation_angles = glm::vec2(0.0f, 0.0f);
 		}
 	}
 	glutPostRedisplay();
@@ -463,5 +476,7 @@ void reset_camera() {
 	camera_center = glm::vec3(0.0f, 0.0f, 0.0f);
 	camera_up = glm::vec3(0.0f, 1.0f, 0.0);
 	field_of_view_y = PI / 4.0f;
+	//Added later
+	base_rotation_angles = glm::vec2(0.0f, 0.0f);
 }
 
