@@ -234,9 +234,15 @@ void display() {
 
 	/* Rotation must be the accumulated rotation: base plus new */
 	//Model
-	glm::mat4 M = triangle_rotation ? glm::rotate(I, rotation_angle, glm::vec3(0.0f, 1.0f, 0.0f)) : I;
+	//glm::mat4 M = triangle_rotation ? glm::rotate(I, rotation_angle, glm::vec3(0.0f, 1.0f, 0.0f)) : I;
+	glm::vec3 axis = 5.0f * glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::quat rotationQuaternion = glm::quat(cos(rotation_angle * 0.5f), sin(rotation_angle * 0.5f) * axis);
+	rotationQuaternion = glm::normalize(rotationQuaternion);
+	glm::mat4 M = glm::mat4_cast(rotationQuaternion);
+	//glm::mat4 M = triangle_rotation ? glm::rotate(I, rotation_angle, glm::vec3(0.0f, 1.0f, 0.0f)) : I;
 	//View
-	glm::mat4 camRot = glm::mat4_cast(glm::normalize(camera_new_rotation) * glm::normalize(camera_base_rotation));
+	//glm::mat4 camRot = glm::mat4_cast(glm::normalize(camera_new_rotation)) * glm::mat4_cast(glm::normalize(camera_base_rotation));
+	glm::mat4 camRot = I;
 	glm::vec3 position = camera_position + glm::vec3(camera_pan, 0.0f);
 	glm::vec3 center = camera_center + glm::vec3(camera_pan, 0.0f);
 	glm::mat4 V = glm::lookAt(position, center, camera_up);
@@ -256,7 +262,7 @@ void display() {
 		glUniform1i(u_texture_option_loc, texture_mapping_flag ? 1 : 0);
 	}
 	
-	/*Bind*/
+	/* Bind */
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	if (a_position_loc != -1) {
 		glEnableVertexAttribArray(a_position_loc);
