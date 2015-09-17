@@ -391,7 +391,7 @@ void mouse_active(int mouse_x, int mouse_y) {
 		mouse_current = glm::vec2(static_cast<float>(mouse_x), static_cast<float>(mouse_y));
 		if (mode == PAN) {
 			glm::vec2 deltas = mouse_start_drag - mouse_current;
-			glm::vec2 scale_factors = 0.5f * glm::vec2(glutGet(GLUT_WINDOW_WIDTH), -1.0f * glutGet(GLUT_WINDOW_HEIGHT));
+			glm::vec2 scale_factors = glm::vec2(2.0f / glutGet(GLUT_WINDOW_WIDTH), -2.0f / glutGet(GLUT_WINDOW_HEIGHT));
 			camera_pan = scale_factors * deltas;
 		} else if (mode == ROTATION) {
 			/*
