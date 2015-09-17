@@ -236,7 +236,7 @@ void display() {
 	
 	//View
 	/* Camera rotation must be accumulated: base rotation then new rotation */
-	glm::mat4 camRot = glm::mat4_cast(glm::normalize(camera_new_rotation) * glm::normalize(camera_base_rotation));
+	glm::mat4 camRot = glm::mat4_cast(camera_new_rotation * camera_base_rotation);
 	glm::vec3 position = camera_position + glm::vec3(camera_pan, 0.0f);
 	glm::vec3 center = camera_center + glm::vec3(camera_pan, 0.0f);
 	glm::mat4 V = glm::lookAt(position, center, camera_up);
@@ -389,9 +389,9 @@ void mouse_active(int mouse_x, int mouse_y) {
 	glm::vec2 mouse_current;
 	if (mouse_dragging) {
 		mouse_current = glm::vec2(static_cast<float>(mouse_x), static_cast<float>(mouse_y));
+		glm::vec2 scale_factors = glm::vec2(2.0f / glutGet(GLUT_WINDOW_WIDTH), -2.0f / glutGet(GLUT_WINDOW_HEIGHT));
 		if (mode == PAN) {
 			glm::vec2 deltas = mouse_start_drag - mouse_current;
-			glm::vec2 scale_factors = glm::vec2(2.0f / glutGet(GLUT_WINDOW_WIDTH), -2.0f / glutGet(GLUT_WINDOW_HEIGHT));
 			camera_pan = scale_factors * deltas;
 		} else if (mode == ROTATION) {
 			/*
@@ -405,17 +405,22 @@ void mouse_active(int mouse_x, int mouse_y) {
 			     positive direction is down, not up.
 		    */
 			glm::vec2 window_center = 0.5f * glm::vec2(glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
-			glm::vec2 scale_factors = glm::vec2(2.0f / glutGet(GLUT_WINDOW_WIDTH), -2.0f / glutGet(GLUT_WINDOW_HEIGHT));
 			glm::vec2 mouse_current_in_world = scale_factors * (mouse_current - window_center);
 			glm::vec2 mouse_start_drag_in_world = scale_factors * (mouse_start_drag - window_center);
-			/* Update the new rotation */
+			/* 
+			Update the new rotation:
+			Project the two positions to the curve. Now you have two points in 3D
+			The axis of rotation is the cross product of this two vectors
+			The angle of rotation is the angle between the two initial vectors.
+			Construct the quaternion that represent this rotation
+			*/
 			glm::vec3 v_1 = glm::vec3(mouse_current_in_world, projection_on_curve(mouse_current_in_world));
 			glm::vec3 v_2 = glm::vec3(mouse_start_drag_in_world, projection_on_curve(mouse_start_drag_in_world));
 			v_1 = glm::normalize(v_1);
 			v_2 = glm::normalize(v_2);
 			glm::vec3 axis = glm::cross(v_1, v_2);
 			float angle = glm::angle(v_1, v_2);
-			camera_new_rotation = glm::quat(glm::cos(angle * 0.5f), glm::sin(angle * 0.5f) * axis);
+			camera_new_rotation = glm::normalize(glm::quat(glm::cos(0.5f * angle), glm::sin(0.5f * angle) * axis));
 		}
 	}
 	glutPostRedisplay();
@@ -424,12 +429,12 @@ void mouse_active(int mouse_x, int mouse_y) {
 float projection_on_curve(glm::vec2 projected) {
 	const float radius = 0.5f;
 	float z = 0.0f;
-	if (glm::length2(projected) <= (radius * radius * 0.5f)) {
+	if (glm::length2(projected) <= (0.5f * radius * radius)) {
 		//Inside the sphere
 		z = glm::sqrt(radius * radius - glm::length2(projected));
 	} else {
 		//Outside of the sphere using hyperbolic sheet
-		z = (radius * radius * 0.5f) / glm::length(projected);
+		z = (0.5f * radius * radius) / glm::length(projected);
 	}
 	return z;
 }
@@ -453,9 +458,9 @@ void mouse(int button, int state, int mouse_x, int mouse_y) {
 			camera_pan = glm::vec2(0.0, 0.0);
 		} else if (button == GLUT_LEFT_BUTTON) {
 			/* Calculate the accumulated rotation: base rotation plus new one */
-			camera_base_rotation = camera_new_rotation * camera_base_rotation;
+			camera_base_rotation = glm::normalize(camera_new_rotation * camera_base_rotation);
 			/* Reset new rotation to identity */
-			camera_new_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
+			camera_new_rotation = glm::normalize(glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f)));
 		}
 	}
 	glutPostRedisplay();

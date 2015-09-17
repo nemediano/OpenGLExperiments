@@ -270,7 +270,7 @@ void display() {
 	GLM can construct the matrix automatically directly using the method described in
 	https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#Conversion_to_and_from_the_matrix_representation
 	*/
-	mat4 camRot = glm::mat4_cast(glm::normalize(camera_new_rotation) * glm::normalize(camera_base_rotation));
+	mat4 camRot = glm::mat4_cast(camera_new_rotation * camera_base_rotation);
 	vec3 camera_up = vec3(0.0f, 1.0f, 0.0f);
 	vec3 camera_position = vec3(0.0f, 0.0f, 3.0f);
 	vec3 camera_eye = vec3(0.0f, 0.0f, 0.0f);
@@ -351,7 +351,7 @@ void mouse_active(int mouse_x, int mouse_y) {
 		vec3 v_2 = glm::normalize(vec3(mouse_start_drag_in_world, projection_on_curve(mouse_start_drag_in_world)));
 		glm::vec3 axis = glm::cross(v_1, v_2);
 		float angle = glm::angle(v_1, v_2);
-		camera_new_rotation = glm::quat(glm::cos(angle * 0.5f), glm::sin(angle * 0.5f) * axis);
+		camera_new_rotation = glm::normalize(glm::quat(glm::cos(angle * 0.5f), glm::sin(angle * 0.5f) * axis));
 	}
 	glutPostRedisplay();
 }
@@ -362,15 +362,15 @@ void mouse_active(int mouse_x, int mouse_y) {
  https://www.opengl.org/wiki/Object_Mouse_Trackball
 */
 float projection_on_curve(glm::vec2 projected) {
-	const float radius = 0.5f;
+	//This is the distance where the curves changed in terms of the window size
+	const float radius = 0.8f;
 	float z = 0.0f;
-	if (glm::length2(projected) <= (radius * radius * 0.5f)) {
+	if (glm::length2(projected) <= (0.5f * radius * radius)) {
 		//Inside the sphere
 		z = glm::sqrt(radius * radius - glm::length2(projected));
-	}
-	else {
+	} else {
 		//Outside of the sphere using hyperbolic sheet
-		z = (radius * radius * 0.5f) / glm::length(projected);
+		z = (0.5f * radius * radius) / glm::length(projected);
 	}
 	return z;
 }
@@ -384,9 +384,9 @@ void mouse(int button, int state, int mouse_x, int mouse_y) {
 		} else {
 			mouse_dragging = false;
 			/* Calculate the accumulated rotation: base rotation plus new one */
-			camera_base_rotation = camera_new_rotation * camera_base_rotation;
+			camera_base_rotation = glm::normalize(camera_new_rotation * camera_base_rotation);
 			/* Reset new rotation to identity */
-			camera_new_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
+			camera_new_rotation = glm::normalize(glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f)));
 		}
 	}
 	glutPostRedisplay();
