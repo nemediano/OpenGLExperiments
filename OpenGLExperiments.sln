@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CameraTest", "CameraTest\Ca
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Triangle", "Triangle\Triangle.vcxproj", "{C4FB1FFD-28B9-49AC-A8F1-44655C10D571}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TrackBallRotation", "TrackBallRotation\TrackBallRotation.vcxproj", "{35BB0928-E19F-407F-B9A7-42B1DE387DCD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -30,6 +32,13 @@ Global
 		{C4FB1FFD-28B9-49AC-A8F1-44655C10D571}.Release|Win32.ActiveCfg = Release|Win32
 		{C4FB1FFD-28B9-49AC-A8F1-44655C10D571}.Release|Win32.Build.0 = Release|Win32
 		{C4FB1FFD-28B9-49AC-A8F1-44655C10D571}.Release|x64.ActiveCfg = Release|Win32
+		{35BB0928-E19F-407F-B9A7-42B1DE387DCD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{35BB0928-E19F-407F-B9A7-42B1DE387DCD}.Debug|Win32.Build.0 = Debug|Win32
+		{35BB0928-E19F-407F-B9A7-42B1DE387DCD}.Debug|x64.ActiveCfg = Debug|x64
+		{35BB0928-E19F-407F-B9A7-42B1DE387DCD}.Debug|x64.Build.0 = Debug|x64
+		{35BB0928-E19F-407F-B9A7-42B1DE387DCD}.Release|Win32.ActiveCfg = Release|Win32
+		{35BB0928-E19F-407F-B9A7-42B1DE387DCD}.Release|Win32.Build.0 = Release|Win32
+		{35BB0928-E19F-407F-B9A7-42B1DE387DCD}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -89,7 +89,6 @@ struct Vertex {
 //Callback function
 void display();
 void reshape(int new_window_width, int new_window_height);
-//void mouse(int button, int state, int mouse_x, int mouse_y);
 void keyboard(unsigned char key, int mouse_x, int mouse_y);
 //void special_keyboard(int key, int mouse_x, int mouse_y);
 void mouse_active(int mouse_x, int mouse_y);
@@ -100,7 +99,7 @@ void idle();
 int main(int argc, char* argv[]) {
 	glutInit(&argc, argv);
 
-	//Init DevIl for texture loading
+	//Init DevIL for texture loading
 	ilInit();
 	iluInit();
 
@@ -210,7 +209,7 @@ void idle() {
 	float delta_seconds = 0.001f * elapsed;
 	last_time = time;
 
-	rotation_angle += (PI / 2.0f) * delta_seconds;
+	rotation_angle += (TAU / 4.0f) * delta_seconds;
 
 	opengl::gl_error("At idle"); //check for errors and print error strings
 	glutPostRedisplay();
@@ -237,7 +236,7 @@ void display() {
 	
 	//View
 	/* Camera rotation must be accumulated: base rotation then new rotation */
-	glm::mat4 camRot = glm::mat4_cast(glm::normalize(camera_new_rotation)) * glm::mat4_cast(glm::normalize(camera_base_rotation));
+	glm::mat4 camRot = glm::mat4_cast(glm::normalize(camera_new_rotation) * glm::normalize(camera_base_rotation));
 	glm::vec3 position = camera_position + glm::vec3(camera_pan, 0.0f);
 	glm::vec3 center = camera_center + glm::vec3(camera_pan, 0.0f);
 	glm::mat4 V = glm::lookAt(position, center, camera_up);
@@ -245,8 +244,8 @@ void display() {
 	//Projection
 	GLfloat aspect = (float)glutGet(GLUT_WINDOW_WIDTH) / (float)glutGet(GLUT_WINDOW_HEIGHT);
 	GLfloat fovy = field_of_view_y;
-	GLfloat zNear = 0.01f;
-	GLfloat zFar = 10000.0f;
+	GLfloat zNear = 0.1f;
+	GLfloat zFar = 10.0f;
 	glm::mat4 P = glm::perspective(fovy, aspect, zNear, zFar);
 
 	glm::vec4 color = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
@@ -390,26 +389,25 @@ void mouse_active(int mouse_x, int mouse_y) {
 	glm::vec2 mouse_current;
 	if (mouse_dragging) {
 		mouse_current = glm::vec2(static_cast<float>(mouse_x), static_cast<float>(mouse_y));
-		
 		if (mode == PAN) {
 			glm::vec2 deltas = mouse_start_drag - mouse_current;
-			camera_pan.x = deltas.x / glutGet(GLUT_WINDOW_WIDTH) * 2.0f;
-			camera_pan.y = -deltas.y / glutGet(GLUT_WINDOW_HEIGHT) * 2.0f;
+			glm::vec2 scale_factors = 0.5f * glm::vec2(glutGet(GLUT_WINDOW_WIDTH), -1.0f * glutGet(GLUT_WINDOW_HEIGHT));
+			camera_pan = scale_factors * deltas;
 		} else if (mode == ROTATION) {
 			/*
 			 At this point mouse_start_drag and mouse_current are in pixel coordinates (device)
-			 we need to transform them in world coordinates, in order to do hat we need to do a two sept process
+			 we need to transform them in world coordinates, in order to do that we need to do a two step process:
 			 1.- Translating to the scene center (Mouse coordinates are not in the center of the window but 
 			     rather in the upper left corner of the window).
 		     2.- Scale to the same coordinate system, remember they are in pixel, not in the [-1, 1] x [-1, 1]
 			     that we are after projection.
-			 3.- Invert the y coordinate since in most window system the pixel coordinat3es are reversed. I. e. 
-			     positive direction is down not up 
+			 3.- Invert the Y coordinate since in most window systems the pixel coordinates are reversed. I. e. 
+			     positive direction is down, not up.
 		    */
-			glm::vec2 window_center = glm::vec2(glutGet(GLUT_WINDOW_WIDTH) * 0.5f, glutGet(GLUT_WINDOW_HEIGHT) * 0.5f);
-			glm::vec2 scale_factor = glm::vec2(2.0f / glutGet(GLUT_WINDOW_WIDTH), -2.0f / glutGet(GLUT_WINDOW_HEIGHT));
-			glm::vec2 mouse_current_in_world = scale_factor * (mouse_current - window_center);
-			glm::vec2 mouse_start_drag_in_world = scale_factor * (mouse_start_drag - window_center);
+			glm::vec2 window_center = 0.5f * glm::vec2(glutGet(GLUT_WINDOW_WIDTH), glutGet(GLUT_WINDOW_HEIGHT));
+			glm::vec2 scale_factors = glm::vec2(2.0f / glutGet(GLUT_WINDOW_WIDTH), -2.0f / glutGet(GLUT_WINDOW_HEIGHT));
+			glm::vec2 mouse_current_in_world = scale_factors * (mouse_current - window_center);
+			glm::vec2 mouse_start_drag_in_world = scale_factors * (mouse_start_drag - window_center);
 			/* Update the new rotation */
 			glm::vec3 v_1 = glm::vec3(mouse_current_in_world, projection_on_curve(mouse_current_in_world));
 			glm::vec3 v_2 = glm::vec3(mouse_start_drag_in_world, projection_on_curve(mouse_start_drag_in_world));
@@ -417,14 +415,14 @@ void mouse_active(int mouse_x, int mouse_y) {
 			v_2 = glm::normalize(v_2);
 			glm::vec3 axis = glm::cross(v_1, v_2);
 			float angle = glm::angle(v_1, v_2);
-			camera_new_rotation = glm::quat(glm::cos(angle / 0.5f), glm::sin(angle * 0.5f) * axis);
+			camera_new_rotation = glm::quat(glm::cos(angle * 0.5f), glm::sin(angle * 0.5f) * axis);
 		}
 	}
 	glutPostRedisplay();
 }
 
 float projection_on_curve(glm::vec2 projected) {
-	const float radius = 0.8f;
+	const float radius = 0.5f;
 	float z = 0.0f;
 	if (glm::length2(projected) <= (radius * radius * 0.5f)) {
 		//Inside the sphere
