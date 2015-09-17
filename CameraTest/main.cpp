@@ -135,7 +135,6 @@ void init_OpenGL() {
 	}
 	opengl::get_OpenGL_info();
 
-
 	program_ptr = new opengl::OpenGLProgram("shaders/vertexShader.glsl", "shaders/fragmentShader.glsl");
 	
 	if (!program_ptr->is_ok()) {
@@ -183,7 +182,7 @@ void init_OpenGL() {
 void create_glut_window() {
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(512, 512);
-	window = glutCreateWindow("Hello world OpenGL");
+	window = glutCreateWindow("Trackball camera test");
 }
 
 void create_glut_callbacks() {
@@ -223,10 +222,6 @@ void init_program() {
 	rotation_angle = 0.0f;
 	triangle_rotation = false;
 	texture_mapping_flag = true;
-	camera_base_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
-	camera_new_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
-	base_rotation_angles = glm::vec2(0.0f, 0.0f);
-	new_rotation_angles = glm::vec2(0.0f, 0.0f);
 	reset_camera();
 }
 
@@ -236,23 +231,17 @@ void display() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	program_ptr->use_program();
 	glm::mat4 I(1.0f);
-
-	/* Rotation must be the accumulated rotation: base plus new */
+	
 	//Model
-	//glm::mat4 M = triangle_rotation ? glm::rotate(I, rotation_angle, glm::vec3(0.0f, 1.0f, 0.0f)) : I;
-	//glm::vec3 axis = 5.0f * glm::vec3(0.0f, 1.0f, 0.0f);
-	//glm::quat rotationQuaternion = glm::quat(cos(rotation_angle * 0.5f), sin(rotation_angle * 0.5f) * axis);
-	//rotationQuaternion = glm::normalize(rotationQuaternion);
-	//glm::mat4 M = glm::mat4_cast(rotationQuaternion);
 	glm::mat4 M = triangle_rotation ? glm::rotate(I, rotation_angle, glm::vec3(0.0f, 1.0f, 0.0f)) : I;
+	
 	//View
-	//glm::mat4 camRot = glm::mat4_cast(glm::normalize(camera_new_rotation)) * glm::mat4_cast(glm::normalize(camera_base_rotation));
-	glm::mat4 camRot = I;
-	camRot = glm::rotate(camRot, base_rotation_angles.x + new_rotation_angles.x, glm::vec3(0.0f, 1.0f, 0.0f));
-	camRot = glm::rotate(camRot, base_rotation_angles.y + new_rotation_angles.y, glm::vec3(1.0f, 0.0f, 0.0f));
+	/* Camera rotation must be accumulated: base rotation then new rotation */
+	glm::mat4 camRot = glm::mat4_cast(glm::normalize(camera_new_rotation)) * glm::mat4_cast(glm::normalize(camera_base_rotation));
 	glm::vec3 position = camera_position + glm::vec3(camera_pan, 0.0f);
 	glm::vec3 center = camera_center + glm::vec3(camera_pan, 0.0f);
 	glm::mat4 V = glm::lookAt(position, center, camera_up);
+
 	//Projection
 	GLfloat aspect = (float)glutGet(GLUT_WINDOW_WIDTH) / (float)glutGet(GLUT_WINDOW_HEIGHT);
 	GLfloat fovy = field_of_view_y;
@@ -401,27 +390,34 @@ void mouse_active(int mouse_x, int mouse_y) {
 	glm::vec2 mouse_current;
 	if (mouse_dragging) {
 		mouse_current = glm::vec2(static_cast<float>(mouse_x), static_cast<float>(mouse_y));
-		glm::vec2 deltas = mouse_start_drag - mouse_current;
+		
 		if (mode == PAN) {
+			glm::vec2 deltas = mouse_start_drag - mouse_current;
 			camera_pan.x = deltas.x / glutGet(GLUT_WINDOW_WIDTH) * 2.0f;
 			camera_pan.y = -deltas.y / glutGet(GLUT_WINDOW_HEIGHT) * 2.0f;
 		} else if (mode == ROTATION) {
+			/*
+			 At this point mouse_start_drag and mouse_current are in pixel coordinates (device)
+			 we need to transform them in world coordinates, in order to do hat we need to do a two sept process
+			 1.- Translating to the scene center (Mouse coordinates are not in the center of the window but 
+			     rather in the upper left corner of the window).
+		     2.- Scale to the same coordinate system, remember they are in pixel, not in the [-1, 1] x [-1, 1]
+			     that we are after projection.
+			 3.- Invert the y coordinate since in most window system the pixel coordinat3es are reversed. I. e. 
+			     positive direction is down not up 
+		    */
+			glm::vec2 window_center = glm::vec2(glutGet(GLUT_WINDOW_WIDTH) * 0.5f, glutGet(GLUT_WINDOW_HEIGHT) * 0.5f);
+			glm::vec2 scale_factor = glm::vec2(2.0f / glutGet(GLUT_WINDOW_WIDTH), -2.0f / glutGet(GLUT_WINDOW_HEIGHT));
+			glm::vec2 mouse_current_in_world = scale_factor * (mouse_current - window_center);
+			glm::vec2 mouse_start_drag_in_world = scale_factor * (mouse_start_drag - window_center);
 			/* Update the new rotation */
-			//glm::vec2 window_center = glm::vec2(glutGet(GLUT_WINDOW_WIDTH) * 0.5f, glutGet(GLUT_WINDOW_HEIGHT) * 0.5f);
-			//glm::vec3 v_1 = glm::vec3(mouse_current - window_center, projection_on_curve(mouse_current));
-			//glm::vec3 v_2 = glm::vec3(mouse_start_drag - window_center, projection_on_curve(mouse_start_drag));
-			//v_1 = glm::normalize(v_1);
-			//v_2 = glm::normalize(v_2);
-			//glm::vec3 axis = glm::cross(v_1, v_2);
-			//float angle = glm::angle(v_1, v_2);
-			//camera_new_rotation = glm::quat(glm::cos(angle / 0.5f), glm::sin(angle * 0.5f) * axis);
-			//camera_new_rotation.x = glm::cos(angle * 0.5f);
-			//camera_new_rotation.y = glm::sin(angle * 0.5f) * axis.x;
-			//camera_new_rotation.z = glm::sin(angle * 0.5f) * axis.y;
-			//camera_new_rotation.w = glm::sin(angle * 0.5f) * axis.z;
-			//Added later
-			new_rotation_angles.x = deltas.x / glutGet(GLUT_WINDOW_WIDTH) * TAU / 2.0f;
-			new_rotation_angles.y = deltas.y / glutGet(GLUT_WINDOW_HEIGHT) * TAU / 2.0f;
+			glm::vec3 v_1 = glm::vec3(mouse_current_in_world, projection_on_curve(mouse_current_in_world));
+			glm::vec3 v_2 = glm::vec3(mouse_start_drag_in_world, projection_on_curve(mouse_start_drag_in_world));
+			v_1 = glm::normalize(v_1);
+			v_2 = glm::normalize(v_2);
+			glm::vec3 axis = glm::cross(v_1, v_2);
+			float angle = glm::angle(v_1, v_2);
+			camera_new_rotation = glm::quat(glm::cos(angle / 0.5f), glm::sin(angle * 0.5f) * axis);
 		}
 	}
 	glutPostRedisplay();
@@ -459,12 +455,9 @@ void mouse(int button, int state, int mouse_x, int mouse_y) {
 			camera_pan = glm::vec2(0.0, 0.0);
 		} else if (button == GLUT_LEFT_BUTTON) {
 			/* Calculate the accumulated rotation: base rotation plus new one */
-			//camera_base_rotation = camera_new_rotation * camera_base_rotation;
+			camera_base_rotation = camera_new_rotation * camera_base_rotation;
 			/* Reset new rotation to identity */
-			//camera_new_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
-			//Add for testing
-			base_rotation_angles += new_rotation_angles;
-			new_rotation_angles = glm::vec2(0.0f, 0.0f);
+			camera_new_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
 		}
 	}
 	glutPostRedisplay();
@@ -472,11 +465,12 @@ void mouse(int button, int state, int mouse_x, int mouse_y) {
 
 
 void reset_camera() {
-	camera_position = glm::vec3(0.0f, 0.0f, 3.5f);
+	camera_position = glm::vec3(0.0f, 0.0f, 4.0f);
 	camera_center = glm::vec3(0.0f, 0.0f, 0.0f);
 	camera_up = glm::vec3(0.0f, 1.0f, 0.0);
-	field_of_view_y = PI / 4.0f;
-	//Added later
-	base_rotation_angles = glm::vec2(0.0f, 0.0f);
+	field_of_view_y = PI / 3.0f;
+	camera_base_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
+	camera_new_rotation = glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
+	camera_pan = glm::vec2(0.0, 0.0);
 }
 
