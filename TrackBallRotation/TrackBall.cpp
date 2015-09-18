@@ -92,7 +92,7 @@ void exit_glut() {
 void create_glut_window() {
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(512, 512);
-	window = glutCreateWindow("Simplest trackball rotation");
+	window = glutCreateWindow("Simple trackball rotation example");
 }
 
 void init_program() {
@@ -101,6 +101,8 @@ void init_program() {
 	nTriangles = 4;
 	/* Then, create primitives */
 	create_primitives();
+	/* Initialize rotation to the no rotation quaternion */
+	camera_new_rotation = camera_base_rotation = glm::normalize(glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f)));
 }
 
 void init_OpenGL() {
@@ -209,7 +211,7 @@ void create_primitives() {
 
 	const unsigned int nVertex = 4;
 	const unsigned int nIndices = 12;
-
+	//Regular tetrahedral inscribed in unit circle
 	Vertex points[nVertex] = {
 		{ {0.0f, 0.0f, 1.0f},                                         {1.0f, 1.0f, 0.0f} },
 		{ {0.0, (2.0 / 3.0) * glm::sqrt(2.0), -1.0 / 3.0},            {1.0f, 0.0f, 0.0f} },
@@ -217,6 +219,7 @@ void create_primitives() {
 		{ {glm::sqrt(2.0 / 3.0), -glm::sqrt(2.0) / 3.0, -1.0 / 3.0},  {0.0f, 1.0f, 0.0f} },
 	};
 
+	//Create four triangles using the point indexes
 	unsigned short indices[nIndices] = {
 		1, 2, 3,
 		0, 1, 3,
@@ -261,13 +264,18 @@ void display() {
 	/************************************************************************/
 	/* Calculate  Model View Projection Matrices                            */
 	/************************************************************************/
+	/*
+	It has no effect I'm only showing where to put a Model transform in 
+	case you need it
+	*/
 	//Identity matrix
 	mat4 I(1.0f);
 	//Model
 	mat4 M = I;
+
 	//View
 	/* 
-	GLM can construct the matrix automatically directly using the method described in
+	GLM can construct the rotation matrix given a quaternion automatically using the method described in
 	https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#Conversion_to_and_from_the_matrix_representation
 	*/
 	mat4 camRot = glm::mat4_cast(camera_new_rotation * camera_base_rotation);
@@ -275,12 +283,13 @@ void display() {
 	vec3 camera_position = vec3(0.0f, 0.0f, 3.0f);
 	vec3 camera_eye = vec3(0.0f, 0.0f, 0.0f);
 	mat4 V = glm::lookAt(camera_position, camera_eye, camera_up);
+	
 	//Projection
-	GLfloat aspect = (float)glutGet(GLUT_WINDOW_WIDTH) / (float)glutGet(GLUT_WINDOW_HEIGHT);
-	GLfloat fovy = TAU / 7.0f;
+	GLfloat aspect_ratio = (float)glutGet(GLUT_WINDOW_WIDTH) / (float)glutGet(GLUT_WINDOW_HEIGHT);
+	GLfloat field_of_view_y = TAU / 7.0f;
 	GLfloat zNear = 0.1f;
 	GLfloat zFar = 10.0f;
-	mat4 P = glm::perspective(fovy, aspect, zNear, zFar);
+	mat4 P = glm::perspective(field_of_view_y, aspect_ratio, zNear, zFar);
 
 	/************************************************************************/
 	/* Send uniform values to shader                                        */
@@ -329,12 +338,11 @@ void mouse_active(int mouse_x, int mouse_y) {
 	using glm::vec2;
 	using glm::vec3;
 
-	vec2 mouse_current;
 	if (mouse_dragging) {
-		mouse_current = vec2(static_cast<float>(mouse_x), static_cast<float>(mouse_y));
+		vec2 mouse_current = vec2(static_cast<float>(mouse_x), static_cast<float>(mouse_y));
 		/*
 		At this point mouse_start_drag and mouse_current are in pixel coordinates (device)
-		we need to transform them in world coordinates, in order to do that we need to do a two step process:
+		we need to transform them in world coordinates is a two step process:
 		1.- Translating to the scene center (Mouse coordinates are not in the center of the window but
 		rather in the upper left corner of the window).
 		2.- Scale to the same coordinate system, remember they are in pixel, not in the [-1, 1] x [-1, 1]
