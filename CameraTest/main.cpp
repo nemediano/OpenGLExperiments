@@ -51,9 +51,6 @@ int nTriangles;
 bool mouse_dragging;
 glm::vec2 mouse_start_drag;
 enum CAM_TYPE{ROTATION, PAN, NONE} mode;
-//Temp for understanding go back to Euler angles
-glm::vec2 base_rotation_angles;
-glm::vec2 new_rotation_angles;
 
 //Camera handling
 glm::vec3 camera_position;
