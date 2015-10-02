@@ -118,6 +118,7 @@ void display() {
 	    }
 		glutSolidSphere(0.05, 10, 10);
    }
+   
 
    //Logic to draw the edge
    if (switch_material_loc != -1) {

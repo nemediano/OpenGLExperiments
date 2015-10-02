@@ -387,8 +387,7 @@ void mouse(int button, int state, int mouse_x, int mouse_y) {
 	if (button == GLUT_LEFT_BUTTON) {
 		if (state == GLUT_DOWN) {
 			mouse_dragging = true;
-			mouse_start_drag.x = static_cast<float>(mouse_x);
-			mouse_start_drag.y = static_cast<float>(mouse_y);
+			mouse_start_drag = glm::vec2(static_cast<float>(mouse_x), static_cast<float>(mouse_y));
 		} else {
 			mouse_dragging = false;
 			/* Calculate the accumulated rotation: base rotation plus new one */
