@@ -13,7 +13,7 @@ namespace texture {
 	public:
 		TextureHandler();
 		//Interface
-		bool load_texture(std::wstring file_name);
+		bool load_texture(std::string file_name);
 		void bind();
 		//Getters
 		int get_width();

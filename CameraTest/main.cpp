@@ -139,17 +139,17 @@ void init_OpenGL() {
 		exit(EXIT_FAILURE);
 	}
 
-	opengl::get_error_log();
+	//opengl::get_error_log();
 	
 	for (int i = 0; i < 6; ++i) {
 		texture_ptr[i] = new texture::TextureHandler();
 	}	
-	texture_ptr[0]->load_texture(L"img/three.png");
-	texture_ptr[1]->load_texture(L"img/one.png");
-	texture_ptr[2]->load_texture(L"img/six.png");
-	texture_ptr[3]->load_texture(L"img/four.png");
-	texture_ptr[4]->load_texture(L"img/two.png");
-	texture_ptr[5]->load_texture(L"img/five.png");
+	texture_ptr[0]->load_texture("img/three.png");
+	texture_ptr[1]->load_texture("img/one.png");
+	texture_ptr[2]->load_texture("img/six.png");
+	texture_ptr[3]->load_texture("img/four.png");
+	texture_ptr[4]->load_texture("img/two.png");
+	texture_ptr[5]->load_texture("img/five.png");
 	
 	u_PVM_location = program_ptr->get_uniform_location("PVM");
 	u_color_location = program_ptr->get_uniform_location("Color");
@@ -458,6 +458,8 @@ void mouse(int button, int state, int mouse_x, int mouse_y) {
 			camera_base_rotation = glm::normalize(camera_new_rotation * camera_base_rotation);
 			/* Reset new rotation to identity */
 			camera_new_rotation = glm::normalize(glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f)));
+		} else if (button == 3 || button == 4) {
+			mouse_wheel(0, button == 3 ? 1 : -1, mouse_x, mouse_y);
 		}
 	}
 	glutPostRedisplay();
