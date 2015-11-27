@@ -1,4 +1,4 @@
-#version 150
+#version 130
 uniform float time;
 uniform mat4 VM;
 uniform mat4 P;

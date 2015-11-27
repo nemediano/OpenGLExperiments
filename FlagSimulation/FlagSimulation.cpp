@@ -59,8 +59,6 @@ void display() {
    //Identity matrix to help calculation
    glm::mat4 I(1.0f); 
    
-   //Model transformation
-   glm::mat4 M = I;
 
    //View
    glm::mat4 V = I;
@@ -111,7 +109,7 @@ void display() {
    }
    std::vector<glm::vec3> positions = flag->get_positions();
    for (auto particle_pos : positions) {
-	    glm::mat4 M;
+	    glm::mat4 M(1.0f);
 		M = glm::translate(M, particle_pos);
 		if (VM_loc != -1) {
 	       glUniformMatrix4fv(VM_loc, 1, false, glm::value_ptr(V * M));
@@ -134,7 +132,7 @@ void display() {
 	   glm::vec3 axis = glm::normalize(glm::cross(z_axis, a_to_b));
 	   GLfloat angle = glm::angle(z_axis, a_to_b);
 	   
-	   glm::mat4 M;
+	   glm::mat4 M(1.0f);
 	   M = glm::translate(M, a);
 	   M = glm::rotate(M, angle, axis);
 	   //Tube born aligned to z axis
@@ -159,7 +157,7 @@ void init_open_gl() {
    }
    cout << opengl::get_OpenGL_info();
    
-   opengl::get_error_log();
+   //opengl::get_error_log();
    
    //Create program, load and compile shaders
    gl_program_ptr = new opengl::OpenGLProgram("shaders/PhongVertex.vert", "shaders/PhongFragment.frag");
@@ -256,7 +254,7 @@ void init_program() {
 	camera_new_rotation = glm::quat(1.0, glm::vec3(0.0f, 0.0f, 00.f));
 	mode = NONE;
 
-	flag = new Flag(8);
+	flag = new Flag(5);
 }
 
 void bounding_box(glm::vec3* min, glm::vec3* max, float* mesh, int num_vertex) {

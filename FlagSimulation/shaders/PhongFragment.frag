@@ -1,4 +1,4 @@
-#version 150
+#version 130
 uniform int texture_map_flag;
 uniform int light_mode;
 uniform int switch_material;

@@ -4,11 +4,12 @@
 
 namespace texture {
 	
-	TextureHandler::TextureHandler() : m_data(nullptr), m_texture_id(0), m_width(0), m_height(0) {
+	TextureHandler::TextureHandler() : m_width(0), m_height(0), m_data(nullptr), m_texture_id(0) {
 		glGenTextures(1, &m_texture_id);
+		m_devil_image_id = 0;
 	}
 
-	bool TextureHandler::load_texture(std::wstring file_name) {
+	bool TextureHandler::load_texture(std::string file_name) {
 		m_devil_image_id = ilGenImage();
 		ilBindImage(m_devil_image_id);
 		ilLoadImage(file_name.c_str());
@@ -53,6 +54,7 @@ namespace texture {
 		std::copy(copy.m_data, copy.m_data + (copy.m_width * copy.m_height * 4), m_data);
 
 		m_devil_image_id = copy.m_devil_image_id;
+		m_texture_id = copy.m_texture_id;
 		m_height = copy.m_height;
 		m_width = copy.m_width;
 	}
@@ -70,6 +72,7 @@ namespace texture {
 		std::copy(rhs.m_data, rhs.m_data + (rhs.m_width * rhs.m_height * 4), m_data);
 		
 		m_devil_image_id = rhs.m_devil_image_id;
+		m_texture_id = rhs.m_texture_id;
 		m_height = rhs.m_height;
 		m_width = rhs.m_width;
 

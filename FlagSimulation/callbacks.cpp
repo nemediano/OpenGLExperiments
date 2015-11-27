@@ -79,6 +79,11 @@ void mouse(int button, int state, int mouse_x, int mouse_y) {
 			camera_new_rotation = glm::normalize(glm::quat(1.0f, glm::vec3(0.0f, 0.0f, 0.0f)));
 		}
 	}
+
+	if (button == 3 || button == 4) {
+		mouse_wheel(0, button == 3 ? 1 : -1, mouse_x, mouse_y);
+	}
+
 	glutPostRedisplay();
 }
 
