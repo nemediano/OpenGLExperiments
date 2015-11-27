@@ -134,7 +134,7 @@ void init_OpenGL() {
 	/* In a normal program the shader should be in separate text files
 	I put them here to avoid another layer of complexity */
 	string vertex_shader_src =
-		"#version 330\n"
+		"#version 130\n"
 		"in vec3 Position;\n"
 		"in vec3 Color\n;\n"
 		"\n"
@@ -148,7 +148,7 @@ void init_OpenGL() {
 		"}\n";
 
 	string fragment_shader_src =
-		"#version 330\n"
+		"#version 130\n"
 		"\n"
 		"in vec4 vColor;\n"
 		"\n"
@@ -265,7 +265,7 @@ void display() {
 	/* Calculate  Model View Projection Matrices                            */
 	/************************************************************************/
 	/*
-	It has no effect I'm only showing where to put a Model transform in 
+	Model matrix has no effect I'm only showing where to put a Model transform in
 	case you need it
 	*/
 	//Identity matrix
@@ -359,7 +359,7 @@ void mouse_active(int mouse_x, int mouse_y) {
 		vec3 v_2 = glm::normalize(vec3(mouse_start_drag_in_world, projection_on_curve(mouse_start_drag_in_world)));
 		glm::vec3 axis = glm::cross(v_1, v_2);
 		float angle = glm::angle(v_1, v_2);
-		camera_new_rotation = glm::normalize(glm::quat(glm::cos(angle * 0.5f), glm::sin(angle * 0.5f) * axis));
+		camera_new_rotation = glm::normalize(glm::quat(glm::cos(0.5f * angle), glm::sin(0.5f * angle) * axis));
 	}
 	glutPostRedisplay();
 }
