@@ -116,7 +116,7 @@ void init_OpenGL() {
 	/* In a normal program the shader should be in separate text files
 	I put them here to avoid another layer of complexity */
 	string vertex_shader_src =
-		"#version 330\n"
+		"#version 130\n"
 		"in vec3 Position;\n"
 		"in vec3 Color\n;\n"
 		"\n"
@@ -130,7 +130,7 @@ void init_OpenGL() {
 		"}\n";
 
 	string fragment_shader_src = 
-		"#version 330\n"
+		"#version 130\n"
 		"\n"
 		"in vec4 vColor;\n"
 		"\n"
