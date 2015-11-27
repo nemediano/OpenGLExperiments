@@ -214,7 +214,7 @@ void init_OpenGL() {
 	}
 	cout << opengl::get_OpenGL_info() << endl;
 	//Register OpenGL error log if we are in debug mode
-	opengl::get_error_log();
+	//opengl::get_error_log();
 
 	// Create and bind a vertex array object
 	glGenVertexArrays(1, &vertex_array_object);
