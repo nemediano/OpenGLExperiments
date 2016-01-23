@@ -8,7 +8,8 @@ namespace texture {
 		glGenTextures(1, &m_texture_id);
 	}
 
-	bool TextureHandler::load_texture(std::string file_name) {
+	bool TextureHandler::load_texture(std::string file_name_tmp) {
+		std::wstring file_name(file_name_tmp.begin(), file_name_tmp.end());
 		m_devil_image_id = ilGenImage();
 		ilBindImage(m_devil_image_id);
 		ilLoadImage(file_name.c_str());

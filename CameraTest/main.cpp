@@ -139,7 +139,7 @@ void init_OpenGL() {
 		exit(EXIT_FAILURE);
 	}
 
-	//opengl::get_error_log();
+	opengl::get_error_log();
 	
 	for (int i = 0; i < 6; ++i) {
 		texture_ptr[i] = new texture::TextureHandler();

@@ -157,7 +157,7 @@ void init_open_gl() {
    }
    cout << opengl::get_OpenGL_info();
    
-   //opengl::get_error_log();
+   opengl::get_error_log();
    
    //Create program, load and compile shaders
    gl_program_ptr = new opengl::OpenGLProgram("shaders/PhongVertex.vert", "shaders/PhongFragment.frag");

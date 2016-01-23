@@ -9,7 +9,8 @@ namespace texture {
 		m_devil_image_id = 0;
 	}
 
-	bool TextureHandler::load_texture(std::string file_name) {
+	bool TextureHandler::load_texture(std::string file_name_tmp) {
+		std::wstring file_name(file_name_tmp.begin(), file_name_tmp.end());
 		m_devil_image_id = ilGenImage();
 		ilBindImage(m_devil_image_id);
 		ilLoadImage(file_name.c_str());
