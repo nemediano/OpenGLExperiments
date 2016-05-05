@@ -33,6 +33,8 @@ namespace options {
 
 	//Program logic
 	GLint subdiv_level = 0;
+	GLboolean wireframe = GL_FALSE;
+	GLboolean icosahedron = GL_TRUE;
 
 	//Manage the Vertex Buffer Object
 	GLuint vbo = 0;

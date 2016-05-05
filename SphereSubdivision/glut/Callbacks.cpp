@@ -33,7 +33,20 @@ void keyboard(unsigned char key, int mouse_x, int mouse_y) {
 		exit_glut();
 	} else if (key == 'c' || key == 'C') {
 		reset_camera();
+	} else if (key == 'w' || key == 'W') {
+		options::wireframe = (!options::wireframe);
+		if (options::wireframe) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		} else {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
+	} else if (key == 't' || key == 'T') {
+		options::icosahedron = (!options::icosahedron);
+		create_sphere();
+		cout << "Starting solid: " << (options::icosahedron ? "icosahedron" : "tetrahedron") << endl;
 	}
+
+	glutPostRedisplay();
 }
 
 void mouse_wheel(int wheel, int direction, int mouse_x, int mouse_y) {
@@ -45,6 +58,7 @@ void mouse_wheel(int wheel, int direction, int mouse_x, int mouse_y) {
 			options::field_of_view_y -= DELTA_ANGLE;
 		}
 	}
+	glutPostRedisplay();
 }
 
 void mouse_active(int mouse_x, int mouse_y) {

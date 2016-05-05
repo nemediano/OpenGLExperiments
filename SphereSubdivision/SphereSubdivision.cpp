@@ -98,12 +98,10 @@ void init_OpenGL() {
 	options::u_shininess_location = options::program_ptr->get_uniform_location("shininess");
 
 	//Activate antialliasing
-	glEnable(GL_LINE_SMOOTH);
-	glEnable(GL_POLYGON_SMOOTH);
-	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
+	glEnable(GL_MULTISAMPLE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glCullFace(GL_BACK);
+	
 	//initialize some basic rendering state
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
@@ -112,7 +110,8 @@ void init_OpenGL() {
 }
 
 void create_glut_window() {
-	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
+	glutSetOption(GLUT_MULTISAMPLE, 8);
+	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
 	glutInitWindowSize(800, 600);
 	options::window = glutCreateWindow("Sphere subdivision");
 }
@@ -255,9 +254,12 @@ void pass_light_and_material() {
 void create_sphere() {
 	triangles.clear();
 	
-	//start_thetrahedra();
-	start_icosahedra();
-
+	if (options::icosahedron) {
+		start_icosahedra();
+	} else {
+		start_thetrahedra();
+	}
+	
 	vertices.clear();
 	indices.clear();
 	create_indexed_mesh();

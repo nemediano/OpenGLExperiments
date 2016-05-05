@@ -42,6 +42,8 @@ namespace options {
 
 	//Program logic
 	extern GLint subdiv_level;
+	extern GLboolean wireframe;
+	extern GLboolean icosahedron;
 
 	//Manage the Vertex Buffer Object
 	extern GLuint vbo;
