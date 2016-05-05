@@ -104,7 +104,7 @@ void init_OpenGL() {
 	
 	//initialize some basic rendering state
 	glEnable(GL_DEPTH_TEST);
-	glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
+	glClearColor(0.85f, 0.85f, 0.85f, 1.0f);
 
 	opengl::gl_error("At scene creation");
 }
@@ -142,7 +142,11 @@ void init_program() {
 	options::light.setAperture(TAU / 8.0f);
 
 	//Create material
-	options::material = scene::Material(glm::vec3(1.0f, 1.0f, 0.0f), 32.0f);
+	glm::vec3 Ka = glm::vec3(0.0215f, 0.1745f, 0.0215f);
+	glm::vec3 Kd = glm::vec3(0.07568f, 0.61424f, 0.07568f);
+	glm::vec3 Ks = glm::vec3(0.633f, 0.727811f, 0.633f);
+	float shine = 10.0f;
+	options::material = scene::Material(Ka, Kd, Ks, shine);
 }
 
 
