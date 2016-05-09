@@ -7,7 +7,7 @@ void init_OpenGL();
 void init_program();
 void create_glut_window();
 void create_glut_callbacks();
-
+void draw_gui();
 
 //Scene creation
 void create_sphere();

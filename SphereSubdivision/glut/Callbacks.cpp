@@ -11,6 +11,7 @@
 #include "../opengl/HelperFunctions.h"
 #include "../SphereSubdivision.h"
 #include "Callbacks.h"
+#include "../imgui/imgui_impl_glut.h"
 
 void reshape(int new_window_width, int new_window_height) {
 	glViewport(0, 0, new_window_width, new_window_height);
@@ -29,17 +30,13 @@ void idle() {
 }
 
 void keyboard(unsigned char key, int mouse_x, int mouse_y) {
+	ImGui_ImplGlut_KeyCallback(key);
 	if (key == 27) {//press ESC to exit
 		exit_glut();
 	} else if (key == 'c' || key == 'C') {
 		reset_camera();
 	} else if (key == 'w' || key == 'W') {
 		options::wireframe = (!options::wireframe);
-		if (options::wireframe) {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		} else {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
 	} else if (key == 't' || key == 'T') {
 		options::icosahedron = (!options::icosahedron);
 		create_sphere();
@@ -47,6 +44,10 @@ void keyboard(unsigned char key, int mouse_x, int mouse_y) {
 	}
 
 	glutPostRedisplay();
+}
+
+void keyboard_up(unsigned char key, int mouse_x, int mouse_y) {
+	ImGui_ImplGlut_KeyUpCallback(key);
 }
 
 void mouse_wheel(int wheel, int direction, int mouse_x, int mouse_y) {
@@ -62,6 +63,8 @@ void mouse_wheel(int wheel, int direction, int mouse_x, int mouse_y) {
 }
 
 void mouse_active(int mouse_x, int mouse_y) {
+
+	ImGui_ImplGlut_MouseMotionCallback(mouse_x, mouse_y);
 	glm::vec2 mouse_current;
 	if (options::mouse_dragging) {
 		mouse_current = glm::vec2(static_cast<float>(mouse_x), static_cast<float>(mouse_y));
@@ -82,6 +85,14 @@ void mouse_active(int mouse_x, int mouse_y) {
 	glutPostRedisplay();
 }
 
+void mouse_motion(int mouse_x, int mouse_y) {
+	ImGui_ImplGlut_MouseMotionCallback(mouse_x, mouse_y);
+}
+
+void mouse_passive(int mouse_x, int mouse_y) {
+	ImGui_ImplGlut_PassiveMouseMotionCallback(mouse_x, mouse_y);
+}
+
 float projection_on_curve(glm::vec2 projected) {
 	const float radius = 0.5f;
 	float z = 0.0f;
@@ -97,7 +108,7 @@ float projection_on_curve(glm::vec2 projected) {
 }
 
 void mouse(int button, int state, int mouse_x, int mouse_y) {
-
+	ImGui_ImplGlut_MouseButtonCallback(button, state);
 	if (state == GLUT_DOWN && button == GLUT_LEFT_BUTTON) {
 		options::mouse_dragging = true;
 		options::mouse_start_drag.x = static_cast<float>(mouse_x);
@@ -115,6 +126,7 @@ void mouse(int button, int state, int mouse_x, int mouse_y) {
 }
 
 void special_keyboard(int key, int mouse_x, int mouse_y) {
+	ImGui_ImplGlut_SpecialCallback(key);
 	using namespace std;
 	switch (key) {
 		case GLUT_KEY_UP:
@@ -137,6 +149,9 @@ void special_keyboard(int key, int mouse_x, int mouse_y) {
 	glutPostRedisplay();
 }
 
+void special_keybpard_up(int key, int mouse_x, int mouse_y) {
+	ImGui_ImplGlut_SpecialUpCallback(key);
+}
 
 void reset_camera() {
 	options::camera_position = glm::vec3(0.0f, 0.0f, options::world_radious);

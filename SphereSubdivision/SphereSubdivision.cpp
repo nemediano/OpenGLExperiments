@@ -17,6 +17,7 @@
 #include "glut/Callbacks.h"
 #include "scene/Light.h"
 #include "scene/Material.h"
+#include "imgui/imgui_impl_glut.h"
 
 #include "SphereSubdivision.h"
 
@@ -39,6 +40,8 @@ int main(int argc, char* argv[]) {
 	create_glut_window();
 
 	init_OpenGL();
+	//Init the imgui system
+	ImGui_ImplGlut_Init(); 
 	init_program();
 
 	create_sphere();
@@ -47,6 +50,25 @@ int main(int argc, char* argv[]) {
 	glutMainLoop();
 
 	return EXIT_SUCCESS;
+}
+
+void draw_gui() {
+	ImGui_ImplGlut_NewFrame();
+
+	if (ImGui::InputInt("Subdivide level", &options::subdiv_level, 1, 1)) {
+		create_sphere();
+	}
+
+	ImGui::Checkbox("Wire frame", &options::wireframe);
+
+	if (ImGui::Checkbox("Icosahedron", &options::icosahedron)) {
+		create_sphere();
+	}
+	if (ImGui::Button("Restart camera")) {
+		reset_camera();
+	}	
+
+	ImGui::Render();
 }
 
 
@@ -120,10 +142,13 @@ void create_glut_callbacks() {
 	glutDisplayFunc(display);
 	glutIdleFunc(idle);
 	glutKeyboardFunc(keyboard);
+	glutKeyboardUpFunc(keyboard_up);
 	glutMouseWheelFunc(mouse_wheel);
 	glutSpecialFunc(special_keyboard);
+	glutSpecialUpFunc(special_keybpard_up);
 	glutMouseFunc(mouse);
 	glutMotionFunc(mouse_active);
+	glutPassiveMotionFunc(mouse_passive);
 	glutReshapeFunc(reshape);
 }
 
@@ -205,7 +230,13 @@ void display() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, options::indexBuffer);
 
 	/* Draw */
+	if (options::wireframe) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+	
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_SHORT, BUFFER_OFFSET(0));
+
+	
 
 	/* Unbind and clean */
 	if (options::a_position_loc != -1) {
@@ -217,8 +248,12 @@ void display() {
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	
+	
 	glUseProgram(0);
 
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	draw_gui();
 
 	glutSwapBuffers();
 	opengl::gl_error("At the end of display");
@@ -294,6 +329,10 @@ void start_thetrahedra() {
 	glm::vec3 p_2 = glm::vec3(-glm::sqrt(2.0 / 3.0), -glm::sqrt(2.0) / 3.0, -1.0 / 3.0);
 	glm::vec3 p_3 = glm::vec3(glm::sqrt(2.0 / 3.0), -glm::sqrt(2.0) / 3.0, -1.0 / 3.0);
 
+	if (options::subdiv_level < 0) {
+		return;
+	}
+
 	//Iterate doing the decomposition
 	subdivide_face(p_0, p_2, p_3, options::subdiv_level);
 	subdivide_face(p_0, p_3, p_1, options::subdiv_level);
@@ -313,33 +352,40 @@ void start_icosahedra() {
 
 	//North pole
 	initial_vertices[0] = radio * vec3(sin(phi) * cos(psy), sin(phi) * sin(psy), cos(phi));
-	
+	//Create five vertex below the north pole at TAU/5 gaps
 	phi = PI / 3.0f;;
 	for (int i = 1; i <= 5; ++i) {
 		initial_vertices[i] = radio * vec3(sin(phi) * cos(psy), sin(phi) * sin(psy), cos(phi));
 		psy += TAU / 5.0f;
 	}
-
+	//Create another five vertex below the first strip. At TAU/GAP and a TAU/10 offset
 	psy = TAU / 10.0f;
 	phi = PI - (PI / 3.0f);
 	for (int i = 1; i <= 5; ++i) {
 		initial_vertices[i + 5] = radio * vec3(sin(phi) * cos(psy), sin(phi) * sin(psy), cos(phi));
 		psy += TAU / 5.0f;
 	}
-
 	//South pole
 	phi = PI;
 	psy = 0.0f;
 	initial_vertices[11] = radio * vec3(sin(phi) * cos(psy), sin(phi) * sin(psy), cos(phi));
 
+	//In case we have a negative subdiv level
+	if (options::subdiv_level < 0) {
+		return;
+	}
+
 	//Generate the initial 20 faces
+	/************************************************************************/
+	/* Connect the north pole to the first strip, a triangle fan            */
+	/************************************************************************/
 	subdivide_face(initial_vertices[0], initial_vertices[1], initial_vertices[2], options::subdiv_level);
 	subdivide_face(initial_vertices[0], initial_vertices[2], initial_vertices[3], options::subdiv_level);
 	subdivide_face(initial_vertices[0], initial_vertices[3], initial_vertices[4], options::subdiv_level);
 	subdivide_face(initial_vertices[0], initial_vertices[4], initial_vertices[5], options::subdiv_level);
 	subdivide_face(initial_vertices[0], initial_vertices[5], initial_vertices[1], options::subdiv_level);
 	/************************************************************************/
-	/*                                                                      */
+	/* Connect the two mid rows of vertex in a triangle strip fashion       */
 	/************************************************************************/
 	subdivide_face(initial_vertices[1], initial_vertices[6], initial_vertices[2], options::subdiv_level);
 	subdivide_face(initial_vertices[2], initial_vertices[6], initial_vertices[7], options::subdiv_level);
@@ -352,7 +398,7 @@ void start_icosahedra() {
 	subdivide_face(initial_vertices[5], initial_vertices[10], initial_vertices[1], options::subdiv_level);
 	subdivide_face(initial_vertices[1], initial_vertices[10], initial_vertices[6], options::subdiv_level);
 	/************************************************************************/
-	/*                                                                      */
+	/* Connect the south pole to the second strip, a triangle fan           */
 	/************************************************************************/
 	subdivide_face(initial_vertices[6], initial_vertices[11], initial_vertices[7], options::subdiv_level);
 	subdivide_face(initial_vertices[7], initial_vertices[11], initial_vertices[8], options::subdiv_level);

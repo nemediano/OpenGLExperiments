@@ -153,6 +153,13 @@
   <ItemGroup>
     <ClInclude Include="glut\Callbacks.h" />
     <ClInclude Include="glut\Globals.h" />
+    <ClInclude Include="imgui\imconfig.h" />
+    <ClInclude Include="imgui\imgui.h" />
+    <ClInclude Include="imgui\imgui_impl_glut.h" />
+    <ClInclude Include="imgui\imgui_internal.h" />
+    <ClInclude Include="imgui\stb_rect_pack.h" />
+    <ClInclude Include="imgui\stb_textedit.h" />
+    <ClInclude Include="imgui\stb_truetype.h" />
     <ClInclude Include="opengl\HelperFunctions.h" />
     <ClInclude Include="opengl\OpenGLProgram.h" />
     <ClInclude Include="scene\Light.h" />
@@ -166,6 +173,10 @@
   <ItemGroup>
     <ClCompile Include="glut\Callbacks.cpp" />
     <ClCompile Include="glut\Globals.cpp" />
+    <ClCompile Include="imgui\imgui.cpp" />
+    <ClCompile Include="imgui\imgui_demo.cpp" />
+    <ClCompile Include="imgui\imgui_draw.cpp" />
+    <ClCompile Include="imgui\imgui_impl_glut.cpp" />
     <ClCompile Include="opengl\HelperFunctions.cpp" />
     <ClCompile Include="opengl\OpenGLProgram.cpp" />
     <ClCompile Include="scene\Light.cpp" />
