@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
 
 void draw_gui() {
 	ImGui_ImplGlut_NewFrame();
-
+	ImGui::Begin("Options");
 	if (ImGui::InputInt("Subdivide level", &options::subdiv_level, 1, 1)) {
 		create_sphere();
 	}
@@ -67,7 +67,7 @@ void draw_gui() {
 	if (ImGui::Button("Restart camera")) {
 		reset_camera();
 	}	
-
+	ImGui::End();
 	ImGui::Render();
 }
 

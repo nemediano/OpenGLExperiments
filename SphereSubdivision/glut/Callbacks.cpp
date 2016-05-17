@@ -109,12 +109,12 @@ float projection_on_curve(glm::vec2 projected) {
 
 void mouse(int button, int state, int mouse_x, int mouse_y) {
 	ImGui_ImplGlut_MouseButtonCallback(button, state);
-	if (state == GLUT_DOWN && button == GLUT_LEFT_BUTTON) {
+	if (state == GLUT_DOWN && button == GLUT_RIGHT_BUTTON) {
 		options::mouse_dragging = true;
 		options::mouse_start_drag.x = static_cast<float>(mouse_x);
 		options::mouse_start_drag.y = static_cast<float>(mouse_y);
 	}
-	else if (button == GLUT_LEFT_BUTTON) {
+	else if (button == GLUT_RIGHT_BUTTON) {
 		options::mouse_dragging = false;
 		/* Calculate the accumulated rotation: base rotation plus new one */
 		options::camera_base_rotation = glm::normalize(options::camera_new_rotation * options::camera_base_rotation);
