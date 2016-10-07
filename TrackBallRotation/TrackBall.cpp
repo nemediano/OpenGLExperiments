@@ -13,7 +13,7 @@
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
-// Define a helpful macro for handling offsets into buffer objects
+// Define a helpful macros for handling offsets into buffer objects
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
 #define OFFSET_OF(type, member) ((GLvoid*)(offsetof(type, member)))
 
